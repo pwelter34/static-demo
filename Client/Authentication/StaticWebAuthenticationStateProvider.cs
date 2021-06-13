@@ -17,7 +17,7 @@ namespace BlazorApp.Client.Authentication
             _httpClient = httpClient;
         }
 
-        public async override Task<AuthenticationState> GetAuthenticationStateAsync()
+        public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
             try
             {
