@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -33,7 +36,7 @@ namespace BlazorApp.Api
         }
 
         [FunctionName("WeatherForecast")]
-        public static IActionResult Run(
+        public static IActionResult WeatherForecast(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest httpRequest,
             ILogger logger)
         {
@@ -48,6 +51,33 @@ namespace BlazorApp.Api
             }).ToArray();
 
             return new OkObjectResult(result);
+        }
+
+
+        [FunctionName("CurrentUser")]
+        public static IActionResult CurrentUser(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequest httpRequest,
+            ILogger logger)
+        {
+            if (!httpRequest.Headers.TryGetValue("x-ms-client-principal", out var header))
+                return new NotFoundResult();
+
+            var data = header[0];
+            var decoded = Convert.FromBase64String(data);
+            var json = Encoding.ASCII.GetString(decoded);
+            var principal = JsonSerializer.Deserialize<ClientPrincipal>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            return new OkObjectResult(principal);
+
+        }
+
+
+        private class ClientPrincipal
+        {
+            public string IdentityProvider { get; set; }
+            public string UserId { get; set; }
+            public string UserDetails { get; set; }
+            public IEnumerable<string> UserRoles { get; set; }
         }
     }
 }
